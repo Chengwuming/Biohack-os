@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Settings, Download, Upload, RefreshCw, Eye, FileJson } from 'lucide-react';
+import { Settings, Download, Upload, RefreshCw, Eye, FileJson, ChevronDown, ChevronRight, Lock, Star, Zap, Coffee } from 'lucide-react';
 import { useSettings } from '../hooks/useSettings';
-import { MEAL_POOL, REWARD_MEALS } from '../data/meals';
+import { MEAL_POOL, REWARD_MEALS, SPECIAL_MEALS } from '../data/meals';
+import { Meal } from '../types';
 import toast from 'react-hot-toast';
 
 export const SettingsTab: React.FC = () => {
@@ -16,6 +17,7 @@ export const SettingsTab: React.FC = () => {
     } = useSettings();
 
     const [showMealBrowser, setShowMealBrowser] = useState(false);
+    const [expandedSection, setExpandedSection] = useState<string | null>('SSR');
 
     const handleFileImport = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -89,9 +91,81 @@ export const SettingsTab: React.FC = () => {
         toast.success('📄 模板已下载');
     };
 
-    // Combine default and custom meals
-    const allMeals = [...MEAL_POOL, ...settings.customMeals];
-    const allRewards = [...REWARD_MEALS, ...settings.customRewards];
+    // Combine and Group Meals
+    const allMeals = [...Object.values(SPECIAL_MEALS), ...MEAL_POOL, ...settings.customMeals];
+
+    const groupedMeals = {
+        'SPECIAL': allMeals.filter(m => m.type === 'SSR_LOCK' || m.isSpecial),
+        'SSR': allMeals.filter(m => m.type === 'SSR' && !m.isSpecial),
+        'SR': allMeals.filter(m => m.type === 'SR'),
+        'R': allMeals.filter(m => m.type.startsWith('R_')),
+    };
+
+    const toggleSection = (section: string) => {
+        setExpandedSection(expandedSection === section ? null : section);
+    };
+
+    const renderMealCard = (meal: Meal) => {
+        const isSSR = meal.type === 'SSR' || meal.type === 'SSR_LOCK';
+        const isSR = meal.type === 'SR';
+        const isR = meal.type.startsWith('R_');
+        const isLock = meal.type === 'SSR_LOCK' || meal.isSpecial;
+
+        const borderColor = isLock ? 'border-gray-400 dark:border-gray-500' :
+            isSSR ? 'border-yellow-400 dark:border-yellow-500' :
+                isSR ? 'border-purple-400 dark:border-purple-500' :
+                    'border-blue-400 dark:border-blue-500';
+
+        const bgGradient = isLock ? 'bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900' :
+            isSSR ? 'bg-gradient-to-br from-yellow-50 to-yellow-100/50 dark:from-yellow-900/20 dark:to-yellow-900/10' :
+                isSR ? 'bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-900/20 dark:to-purple-900/10' :
+                    'bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-900/10';
+
+        return (
+            <div key={meal.id} className={`relative p-3 rounded-xl border-l-4 shadow-sm ${borderColor} ${bgGradient} mb-2`}>
+                <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-1">
+                            {isLock && <Lock size={14} className="text-gray-500" />}
+                            {isSSR && !isLock && <Star size={14} className="text-yellow-500 fill-yellow-500" />}
+                            {isSR && <Zap size={14} className="text-purple-500 fill-purple-500" />}
+                            {isR && <Coffee size={14} className="text-blue-500" />}
+
+                            <span className="font-bold text-gray-800 dark:text-gray-100">{meal.title}</span>
+
+                            {meal.isCustom && (
+                                <span className="text-[10px] px-1.5 py-0.5 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 rounded border border-green-200 dark:border-green-800">
+                                    自定义
+                                </span>
+                            )}
+                        </div>
+
+                        <div className="text-xs text-gray-600 dark:text-gray-300 space-y-0.5 pl-6">
+                            <div className="flex items-center space-x-2">
+                                <span className="font-medium">{meal.main}</span>
+                                <span className="text-gray-300 dark:text-gray-600">|</span>
+                                <span className="text-gray-500 dark:text-gray-400">{meal.side}</span>
+                            </div>
+                            <div className="flex items-center space-x-3 mt-1.5 text-[10px] text-gray-500 dark:text-gray-400 font-mono">
+                                <span className="bg-white/50 dark:bg-black/20 px-1 rounded">PRO: {meal.protein}g</span>
+                                <span className="bg-white/50 dark:bg-black/20 px-1 rounded">¥{meal.cost}</span>
+                                {!isLock && <span className="bg-white/50 dark:bg-black/20 px-1 rounded">权重: {meal.weight || 1.0}</span>}
+                            </div>
+                        </div>
+                    </div>
+
+                    {meal.isCustom && (
+                        <button
+                            onClick={() => deleteCustomMeal(meal.id)}
+                            className="ml-2 p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                        >
+                            <span className="text-xs font-bold">删除</span>
+                        </button>
+                    )}
+                </div>
+            </div>
+        );
+    };
 
     return (
         <div className="space-y-6 animate-in slide-in-from-right-4 pb-8">
@@ -158,91 +232,97 @@ export const SettingsTab: React.FC = () => {
                         重置全部
                     </button>
                 </div>
-                <div className="mt-3 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
-                    <strong className="text-gray-700 dark:text-gray-300">使用步骤:</strong>
-                    <ol className="list-decimal list-inside mt-1 space-y-1">
-                        <li>下载模板文件</li>
-                        <li>用文本编辑器打开并修改</li>
-                        <li>导入修改后的JSON文件</li>
-                        <li>开启"启用自定义数据"开关</li>
-                    </ol>
-                </div>
             </div>
 
-            {/* Meal Pool Browser */}
+            {/* Meal Pool Browser (Accordion) */}
             <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center justify-between mb-4">
                     <h3 className="font-bold text-gray-800 dark:text-gray-100 flex items-center">
                         <Eye size={18} className="mr-2" />
-                        餐食池浏览器
+                        餐食池预览
                     </h3>
-                    <button
-                        onClick={() => setShowMealBrowser(!showMealBrowser)}
-                        className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
-                    >
-                        {showMealBrowser ? '收起' : '展开'}
-                    </button>
+                    <span className="text-xs text-gray-400">共 {allMeals.length} 个餐食</span>
                 </div>
-                {showMealBrowser && (
-                    <div className="space-y-3">
-                        <div className="flex items-center justify-between text-xs font-medium text-gray-500 dark:text-gray-400 px-2">
-                            <span>共 {allMeals.length} 个餐食</span>
-                            <span>自定义: {settings.customMeals.length}</span>
-                        </div>
-                        <div className="max-h-96 overflow-y-auto space-y-2">
-                            {allMeals.map(meal => (
-                                <div key={meal.id} className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
-                                    <div className="flex items-start justify-between">
-                                        <div className="flex-1">
-                                            <div className="flex items-center space-x-2 mb-1">
-                                                <span className={`text-xs font-bold px-2 py-0.5 rounded ${meal.type === 'SSR' || meal.type === 'SSR_LOCK' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400' :
-                                                        meal.type === 'SR' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400' :
-                                                            'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-                                                    }`}>
-                                                    {meal.type}
-                                                </span>
-                                                <span className="font-bold text-sm text-gray-800 dark:text-gray-100">{meal.title}</span>
-                                                {meal.isCustom && <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-0.5 rounded">自定义</span>}
-                                                {meal.isSpecial && <span className="text-xs bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 px-2 py-0.5 rounded">周{meal.specialDay}特殊</span>}
-                                            </div>
-                                            <div className="text-xs text-gray-600 dark:text-gray-300 space-y-0.5">
-                                                <div><span className="text-gray-400 dark:text-gray-500">主:</span> {meal.main}</div>
-                                                <div><span className="text-gray-400 dark:text-gray-500">配:</span> {meal.side}</div>
-                                                <div className="flex items-center space-x-3 mt-1 text-gray-500 dark:text-gray-400">
-                                                    <span>{meal.protein}g蛋白</span>
-                                                    <span>¥{meal.cost}</span>
-                                                    <span>权重:{meal.weight}</span>
-                                                    {meal.location && <span>{meal.location}</span>}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        {meal.isCustom && (
-                                            <button
-                                                onClick={() => deleteCustomMeal(meal.id)}
-                                                className="ml-2 px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded hover:bg-red-200 dark:hover:bg-red-900/50 text-xs font-medium transition-colors"
-                                            >
-                                                删除
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-            </div>
 
-            {/* Current Custom Data Summary */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
-                <h3 className="font-bold text-gray-800 dark:text-gray-100 mb-3">当前自定义数据</h3>
-                <div className="grid grid-cols-2 gap-3 text-center">
-                    <div className="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-lg">
-                        <div className="text-2xl font-black text-purple-600 dark:text-purple-400">{settings.customMeals.length}</div>
-                        <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">自定义餐食</div>
+                <div className="space-y-2">
+                    {/* Special Meals */}
+                    <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                        <button
+                            onClick={() => toggleSection('SPECIAL')}
+                            className="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        >
+                            <div className="flex items-center space-x-2">
+                                <Lock size={16} className="text-gray-500" />
+                                <span className="font-bold text-sm text-gray-700 dark:text-gray-200">特殊/锁定池</span>
+                                <span className="text-xs bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 px-1.5 rounded-full">{groupedMeals.SPECIAL.length}</span>
+                            </div>
+                            {expandedSection === 'SPECIAL' ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                        </button>
+                        {expandedSection === 'SPECIAL' && (
+                            <div className="p-2 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+                                {groupedMeals.SPECIAL.map(renderMealCard)}
+                            </div>
+                        )}
                     </div>
-                    <div className="bg-indigo-50 dark:bg-indigo-900/20 p-3 rounded-lg">
-                        <div className="text-2xl font-black text-indigo-600 dark:text-indigo-400">{settings.customRewards.length}</div>
-                        <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">自定义奖励</div>
+
+                    {/* SSR Meals */}
+                    <div className="border border-yellow-200 dark:border-yellow-900/50 rounded-lg overflow-hidden">
+                        <button
+                            onClick={() => toggleSection('SSR')}
+                            className="w-full flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-900/20 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 transition-colors"
+                        >
+                            <div className="flex items-center space-x-2">
+                                <Star size={16} className="text-yellow-500 fill-yellow-500" />
+                                <span className="font-bold text-sm text-yellow-800 dark:text-yellow-400">SSR 传说池</span>
+                                <span className="text-xs bg-yellow-200 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-400 px-1.5 rounded-full">{groupedMeals.SSR.length}</span>
+                            </div>
+                            {expandedSection === 'SSR' ? <ChevronDown size={16} className="text-yellow-600" /> : <ChevronRight size={16} className="text-yellow-600" />}
+                        </button>
+                        {expandedSection === 'SSR' && (
+                            <div className="p-2 bg-white dark:bg-gray-800 border-t border-yellow-100 dark:border-yellow-900/30">
+                                {groupedMeals.SSR.map(renderMealCard)}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* SR Meals */}
+                    <div className="border border-purple-200 dark:border-purple-900/50 rounded-lg overflow-hidden">
+                        <button
+                            onClick={() => toggleSection('SR')}
+                            className="w-full flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors"
+                        >
+                            <div className="flex items-center space-x-2">
+                                <Zap size={16} className="text-purple-500 fill-purple-500" />
+                                <span className="font-bold text-sm text-purple-800 dark:text-purple-400">SR 史诗池</span>
+                                <span className="text-xs bg-purple-200 dark:bg-purple-900/50 text-purple-700 dark:text-purple-400 px-1.5 rounded-full">{groupedMeals.SR.length}</span>
+                            </div>
+                            {expandedSection === 'SR' ? <ChevronDown size={16} className="text-purple-600" /> : <ChevronRight size={16} className="text-purple-600" />}
+                        </button>
+                        {expandedSection === 'SR' && (
+                            <div className="p-2 bg-white dark:bg-gray-800 border-t border-purple-100 dark:border-purple-900/30">
+                                {groupedMeals.SR.map(renderMealCard)}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* R Meals */}
+                    <div className="border border-blue-200 dark:border-blue-900/50 rounded-lg overflow-hidden">
+                        <button
+                            onClick={() => toggleSection('R')}
+                            className="w-full flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                        >
+                            <div className="flex items-center space-x-2">
+                                <Coffee size={16} className="text-blue-500" />
+                                <span className="font-bold text-sm text-blue-800 dark:text-blue-400">R 稀有池</span>
+                                <span className="text-xs bg-blue-200 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400 px-1.5 rounded-full">{groupedMeals.R.length}</span>
+                            </div>
+                            {expandedSection === 'R' ? <ChevronDown size={16} className="text-blue-600" /> : <ChevronRight size={16} className="text-blue-600" />}
+                        </button>
+                        {expandedSection === 'R' && (
+                            <div className="p-2 bg-white dark:bg-gray-800 border-t border-blue-100 dark:border-blue-900/30">
+                                {groupedMeals.R.map(renderMealCard)}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -255,8 +335,6 @@ export const SettingsTab: React.FC = () => {
                     <li><strong>weight:</strong> 0.1-2.0 (出现概率，1.0为基准)</li>
                     <li><strong>isSpecial:</strong> true 时为特殊餐</li>
                     <li><strong>specialDay:</strong> 0-6 (周日到周六，仅特殊餐需要)</li>
-                    <li><strong>pointsCost:</strong> 奖励所需积分</li>
-                    <li><strong>cooldownDays:</strong> 奖励冷却天数</li>
                 </ul>
             </div>
         </div>
