@@ -14,8 +14,15 @@ import { SPECIAL_MEALS } from './data/meals';
 export default function App() {
     const [activeTab, setActiveTab] = useState<'EAT' | 'TRAIN' | 'STATS' | 'SETTINGS'>('EAT');
 
-    // Real Time
-    const [today, setToday] = useState(new Date());
+    // Real Time with Debug Offset
+    const [today, setToday] = useState(() => {
+        const d = new Date();
+        const offset = parseInt(localStorage.getItem('debug_offset_days') || '0', 10);
+        if (offset !== 0) {
+            d.setDate(d.getDate() + offset);
+        }
+        return d;
+    });
     const dayOfWeek = today.getDay();
 
     // Persistent State
@@ -34,7 +41,14 @@ export default function App() {
 
     // Timer Effect
     useEffect(() => {
-        const timer = setInterval(() => setToday(new Date()), 60000);
+        const timer = setInterval(() => {
+            const d = new Date();
+            const offset = parseInt(localStorage.getItem('debug_offset_days') || '0', 10);
+            if (offset !== 0) {
+                d.setDate(d.getDate() + offset);
+            }
+            setToday(d);
+        }, 60000);
         return () => clearInterval(timer);
     }, []);
 
