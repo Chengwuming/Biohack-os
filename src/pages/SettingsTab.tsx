@@ -234,6 +234,56 @@ export const SettingsTab: React.FC = () => {
                 </div>
             </div>
 
+            {/* Debug Tools */}
+            <div className="bg-red-50 dark:bg-red-900/10 rounded-xl p-4 shadow-sm border border-red-200 dark:border-red-800 transition-colors">
+                <h3 className="font-bold text-red-800 dark:text-red-300 mb-3 flex items-center">
+                    <Settings size={18} className="mr-2" />
+                    开发者调试 (测试用)
+                </h3>
+                <div className="grid grid-cols-2 gap-2">
+                    <button
+                        onClick={() => {
+                            localStorage.setItem('debug_simulated_weekday', '5');
+                            localStorage.setItem('biohack_last_active_date', '2000-1-1');
+                            window.location.reload();
+                        }}
+                        className="py-2 px-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded border border-gray-200 dark:border-gray-700 text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                        模拟周五 (强制重置)
+                    </button>
+                    <button
+                        onClick={() => {
+                            localStorage.setItem('debug_simulated_weekday', '6');
+                            localStorage.setItem('biohack_last_active_date', '2000-1-1');
+                            window.location.reload();
+                        }}
+                        className="py-2 px-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded border border-gray-200 dark:border-gray-700 text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                        模拟周六 (强制重置)
+                    </button>
+                    <button
+                        onClick={() => {
+                            localStorage.setItem('debug_simulated_weekday', '1');
+                            localStorage.setItem('biohack_last_active_date', '2000-1-1');
+                            window.location.reload();
+                        }}
+                        className="py-2 px-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded border border-gray-200 dark:border-gray-700 text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                        模拟周一 (强制重置)
+                    </button>
+                    <button
+                        onClick={() => {
+                            localStorage.removeItem('debug_simulated_weekday');
+                            localStorage.setItem('biohack_last_active_date', '2000-1-1');
+                            window.location.reload();
+                        }}
+                        className="py-2 px-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded border border-red-200 dark:border-red-800 text-xs font-medium hover:bg-red-200 dark:hover:bg-red-900/50"
+                    >
+                        清除模拟 & 恢复
+                    </button>
+                </div>
+            </div>
+
             {/* Meal Pool Browser (Accordion) */}
             <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
                 <div className="flex items-center justify-between mb-4">

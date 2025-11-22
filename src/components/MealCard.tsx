@@ -1,5 +1,5 @@
 import React from 'react';
-import { Lock, Trophy, Home, RotateCcw, XCircle, Skull, AlertTriangle } from 'lucide-react';
+import { Lock, Trophy, Home, RotateCcw, XCircle, Skull, AlertTriangle, Star, Zap, Coffee } from 'lucide-react';
 import { Meal, Patch } from '../types';
 import { PATCHES } from '../data/meals';
 
@@ -31,22 +31,41 @@ export const MealCard: React.FC<MealCardProps> = ({ meal, isLocked, onRoll, onTo
 
     const isDorm = meal.type === 'UR_DORM';
     const isReward = meal.type === 'REWARD';
+    const isSSR = meal.type === 'SSR' || meal.type === 'SSR_LOCK';
+    const isSR = meal.type === 'SR';
+    const isR = meal.type.startsWith('R_');
+
     const totalP = (meal.protein || 0) + (patch?.protein || 0);
 
-    const borderClass = isDorm
-        ? 'border-gray-900 dark:border-gray-600 border-4'
-        : isLocked ? 'border-yellow-400 dark:border-yellow-600 ring-2 ring-yellow-100 dark:ring-yellow-900/30'
-            : isReward ? 'border-purple-400 dark:border-purple-600 ring-2 ring-purple-100 dark:ring-purple-900/30'
-                : 'border-indigo-100 dark:border-indigo-900';
+    // Styling Logic
+    let borderClass = 'border-gray-200 dark:border-gray-700';
+    let bgHeaderClass = 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400';
+    let ringClass = '';
 
-    const bgHeaderClass = isDorm
-        ? 'bg-gray-900 dark:bg-gray-950 text-white'
-        : isLocked ? 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400'
-            : isReward ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400'
-                : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400';
+    if (isDorm) {
+        borderClass = 'border-gray-900 dark:border-gray-600 border-4';
+        bgHeaderClass = 'bg-gray-900 dark:bg-gray-950 text-white';
+    } else if (isLocked) {
+        borderClass = 'border-gray-400 dark:border-gray-500 border-2';
+        bgHeaderClass = 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300';
+    } else if (isReward) {
+        borderClass = 'border-purple-400 dark:border-purple-600 border-2';
+        bgHeaderClass = 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400';
+        ringClass = 'ring-2 ring-purple-100 dark:ring-purple-900/30';
+    } else if (isSSR) {
+        borderClass = 'border-yellow-400 dark:border-yellow-600 border-2';
+        bgHeaderClass = 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400';
+        ringClass = 'ring-2 ring-yellow-100 dark:ring-yellow-900/30';
+    } else if (isSR) {
+        borderClass = 'border-purple-400 dark:border-purple-600 border-2';
+        bgHeaderClass = 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400';
+    } else if (isR) {
+        borderClass = 'border-blue-300 dark:border-blue-700 border-2';
+        bgHeaderClass = 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400';
+    }
 
     return (
-        <div className={`relative bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden mb-4 transition-all border-2 ${borderClass}`}>
+        <div className={`relative bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden mb-4 transition-all ${borderClass} ${ringClass}`}>
 
             {/* Card Header */}
             <div className={`px-4 py-2 flex justify-between items-center border-b border-gray-200 dark:border-gray-700 ${bgHeaderClass}`}>
@@ -54,6 +73,10 @@ export const MealCard: React.FC<MealCardProps> = ({ meal, isLocked, onRoll, onTo
                     {isLocked && <Lock size={14} />}
                     {isReward && <Trophy size={14} />}
                     {isDorm && <Home size={14} />}
+                    {isSSR && !isLocked && <Star size={14} className="fill-current" />}
+                    {isSR && <Zap size={14} className="fill-current" />}
+                    {isR && <Coffee size={14} />}
+
                     <span className="text-xs font-bold">
                         {isLocked ? "系统锁定" : isReward ? "奖励餐" : isDorm ? "宿舍模式" : meal.location}
                     </span>

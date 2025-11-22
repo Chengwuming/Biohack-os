@@ -30,7 +30,15 @@ export function useAutoSettlement({
             settlePreviousDay(lastActiveDate, dailyState, setPoints, setLogs);
 
             // Reset for today
-            const dayOfWeek = today.getDay();
+            let dayOfWeek = today.getDay();
+
+            // Debug: Check for simulated weekday
+            const debugWeekday = localStorage.getItem('debug_simulated_weekday');
+            if (debugWeekday !== null) {
+                dayOfWeek = parseInt(debugWeekday, 10);
+                console.log(`[Debug] Simulating weekday: ${dayOfWeek}`);
+            }
+
             const isFri = dayOfWeek === 5;
             const isSat = dayOfWeek === 6;
 
