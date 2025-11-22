@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Zap, Utensils, Dumbbell, BarChart3, Moon, Sun } from 'lucide-react';
+import { Zap, Utensils, Dumbbell, BarChart3, Moon, Sun, Settings } from 'lucide-react';
 import { usePersistentState } from './hooks/usePersistentState';
 import { useAutoSettlement } from './hooks/useAutoSettlement';
 import { DailyState, WorkoutWeights, Log } from './types';
@@ -7,10 +7,12 @@ import { TabButton } from './components/TabButton';
 import { EatTab } from './pages/EatTab';
 import { TrainTab } from './pages/TrainTab';
 import { StatsTab } from './pages/StatsTab';
+import { SettingsTab } from './pages/SettingsTab';
 import { useTheme } from './hooks/useTheme';
+import { SPECIAL_MEALS } from './data/meals';
 
 export default function App() {
-    const [activeTab, setActiveTab] = useState<'EAT' | 'TRAIN' | 'STATS'>('EAT');
+    const [activeTab, setActiveTab] = useState<'EAT' | 'TRAIN' | 'STATS' | 'SETTINGS'>('EAT');
 
     // Real Time
     const [today, setToday] = useState(new Date());
@@ -35,6 +37,19 @@ export default function App() {
         const timer = setInterval(() => setToday(new Date()), 60000);
         return () => clearInterval(timer);
     }, []);
+
+    // Initialize special meals for Friday/Saturday on mount
+    useEffect(() => {
+        if (!dailyState.lunch && !dailyState.lunchFailed) {
+            const isFri = dayOfWeek === 5;
+            const isSat = dayOfWeek === 6;
+
+            if (isFri || isSat) {
+                const specialMeal = isFri ? SPECIAL_MEALS.liver : SPECIAL_MEALS.fish;
+                setDailyState(prev => ({ ...prev, lunch: specialMeal }));
+            }
+        }
+    }, []); // Only run once on mount
 
     // Auto-Settlement Logic Hook
     useAutoSettlement({
@@ -95,12 +110,16 @@ export default function App() {
                 {activeTab === 'STATS' && (
                     <StatsTab logs={logs} points={points} />
                 )}
+                {activeTab === 'SETTINGS' && (
+                    <SettingsTab />
+                )}
             </div>
 
-            <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex justify-around z-30 pb-safe safe-area-inset-bottom transition-colors">
+            <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 grid grid-cols-4 z-30 pb-safe safe-area-inset-bottom transition-colors">
                 <TabButton active={activeTab === 'EAT'} onClick={() => setActiveTab('EAT')} icon={Utensils} label="补给" />
                 <TabButton active={activeTab === 'TRAIN'} onClick={() => setActiveTab('TRAIN')} icon={Dumbbell} label="训练" />
                 <TabButton active={activeTab === 'STATS'} onClick={() => setActiveTab('STATS')} icon={BarChart3} label="数据" />
+                <TabButton active={activeTab === 'SETTINGS'} onClick={() => setActiveTab('SETTINGS')} icon={Settings} label="设置" />
             </nav>
         </div>
     );

@@ -1,4 +1,4 @@
-export type MealType = 'SR' | 'R_FLAVOR' | 'R_CARB' | 'SSR_LOCK' | 'UR_DORM' | 'REWARD';
+export type MealType = 'SSR' | 'SR' | 'R_FLAVOR' | 'R_CARB' | 'SSR_LOCK' | 'UR_DORM' | 'REWARD';
 
 export interface Meal {
     id: string;
@@ -15,6 +15,10 @@ export interface Meal {
     patchRequired?: boolean;
     pointsCost?: number; // For rewards
     cooldownDays?: number; // For rewards
+    // Custom meal fields
+    isSpecial?: boolean; // 是否为特殊餐
+    specialDay?: number; // 0-6 (周日-周六)，仅当 isSpecial 为 true
+    isCustom?: boolean; // 标记为自定义餐食
 }
 
 export interface Patch {
@@ -23,6 +27,7 @@ export interface Patch {
     content: string;
     cost: number;
     protein: number;
+    isCustom?: boolean;
 }
 
 export interface Log {
@@ -53,4 +58,32 @@ export interface FixedModule {
     cost: number;
     protein: number;
     tips: string;
+    isCustom?: boolean;
+}
+
+// Settings types
+export interface CustomMeal extends Meal {
+    isCustom: true;
+}
+
+export interface CustomReward extends Meal {
+    type: 'REWARD';
+    isCustom: true;
+}
+
+export interface CustomPatch extends Patch {
+    isCustom: true;
+}
+
+export interface CustomFixedModule extends FixedModule {
+    id: string;
+    isCustom: true;
+}
+
+export interface Settings {
+    customMeals: CustomMeal[];
+    customRewards: CustomReward[];
+    customPatches: CustomPatch[];
+    customFixedModules: CustomFixedModule[];
+    useCustomData: boolean; // 是否启用自定义数据
 }
