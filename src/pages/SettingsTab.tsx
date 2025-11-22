@@ -234,74 +234,11 @@ export const SettingsTab: React.FC = () => {
                 </div>
             </div>
 
-            {/* Debug Tools */}
+            {/* Debug Tools - Hidden for Production
             <div className="bg-red-50 dark:bg-red-900/10 rounded-xl p-4 shadow-sm border border-red-200 dark:border-red-800 transition-colors">
-                <h3 className="font-bold text-red-800 dark:text-red-300 mb-3 flex items-center">
-                    <Settings size={18} className="mr-2" />
-                    开发者调试 (时间旅行)
-                </h3>
-                <div className="grid grid-cols-2 gap-2">
-                    <button
-                        onClick={() => {
-                            const current = parseInt(localStorage.getItem('debug_offset_days') || '0', 10);
-                            localStorage.setItem('debug_offset_days', (current + 1).toString());
-                            window.location.reload();
-                        }}
-                        className="py-2 px-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded border border-gray-200 dark:border-gray-700 text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-700"
-                    >
-                        快进一天 (+1 Day)
-                    </button>
-                    <button
-                        onClick={() => {
-                            const currentOffset = parseInt(localStorage.getItem('debug_offset_days') || '0', 10);
-                            const today = new Date();
-                            today.setDate(today.getDate() + currentOffset);
-                            const dayOfWeek = today.getDay(); // 0-6
-
-                            // Calculate days until next Friday (5)
-                            let daysToAdd = 5 - dayOfWeek;
-                            if (daysToAdd <= 0) daysToAdd += 7;
-
-                            localStorage.setItem('debug_offset_days', (currentOffset + daysToAdd).toString());
-                            window.location.reload();
-                        }}
-                        className="py-2 px-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded border border-gray-200 dark:border-gray-700 text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-700"
-                    >
-                        跳到下个周五
-                    </button>
-                    <button
-                        onClick={() => {
-                            const currentOffset = parseInt(localStorage.getItem('debug_offset_days') || '0', 10);
-                            const today = new Date();
-                            today.setDate(today.getDate() + currentOffset);
-                            const dayOfWeek = today.getDay(); // 0-6
-
-                            // Calculate days until next Saturday (6)
-                            let daysToAdd = 6 - dayOfWeek;
-                            if (daysToAdd <= 0) daysToAdd += 7;
-
-                            localStorage.setItem('debug_offset_days', (currentOffset + daysToAdd).toString());
-                            window.location.reload();
-                        }}
-                        className="py-2 px-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded border border-gray-200 dark:border-gray-700 text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-700"
-                    >
-                        跳到下个周六
-                    </button>
-                    <button
-                        onClick={() => {
-                            localStorage.removeItem('debug_offset_days');
-                            localStorage.removeItem('debug_simulated_weekday'); // Clean up old debug key
-                            window.location.reload();
-                        }}
-                        className="py-2 px-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded border border-red-200 dark:border-red-800 text-xs font-medium hover:bg-red-200 dark:hover:bg-red-900/50"
-                    >
-                        重置时间 (回到今天)
-                    </button>
-                </div>
-                <div className="mt-2 text-[10px] text-red-600 dark:text-red-400 text-center">
-                    当前偏移: {localStorage.getItem('debug_offset_days') || 0} 天
-                </div>
+                ...
             </div>
+            */}
 
             {/* Meal Pool Browser (Accordion) */}
             <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
