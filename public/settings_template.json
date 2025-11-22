@@ -1,0 +1,59 @@
+{
+    "customMeals": [
+        {
+            "id": "custom_ssr_1",
+            "type": "SSR",
+            "title": "我的超级餐",
+            "main": "双份鸡胸肉",
+            "side": "糙米饭+西兰花",
+            "location": "自定义食堂",
+            "cost": 15,
+            "protein": 50,
+            "weight": 1.5,
+            "tags": [
+                "高蛋白",
+                "健康"
+            ],
+            "tips": "自己配置的高蛋白餐",
+            "isCustom": true,
+            "isSpecial": false
+        },
+        {
+            "id": "custom_special_wed",
+            "type": "SSR",
+            "title": "周三特餐",
+            "main": "牛排",
+            "side": "蔬菜沙拉",
+            "location": "西餐厅",
+            "cost": 25,
+            "protein": 40,
+            "weight": 1.0,
+            "tags": [
+                "特殊"
+            ],
+            "tips": "每周三固定",
+            "isCustom": true,
+            "isSpecial": true,
+            "specialDay": 3
+        }
+    ],
+    "customRewards": [
+        {
+            "id": "custom_reward_1",
+            "type": "REWARD",
+            "title": "周末大餐",
+            "cost": 50,
+            "pointsCost": 200,
+            "cooldownDays": 7,
+            "tags": [
+                "奖励",
+                "放纵"
+            ],
+            "tips": "辛苦一周的奖励",
+            "isCustom": true
+        }
+    ],
+    "customPatches": [],
+    "customFixedModules": [],
+    "useCustomData": false
+}
