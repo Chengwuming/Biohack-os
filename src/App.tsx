@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Zap, Utensils, Dumbbell, BarChart3, Moon, Sun, Settings } from 'lucide-react';
 import { usePersistentState } from './hooks/usePersistentState';
 import { useAutoSettlement } from './hooks/useAutoSettlement';
+import { useSettings } from './hooks/useSettings';
 import { DailyState, WorkoutWeights, Log } from './types';
+import { getWeightedRandomMeal } from './utils/mealUtils';
 import { TabButton } from './components/TabButton';
 import { EatTab } from './pages/EatTab';
 import { TrainTab } from './pages/TrainTab';
@@ -25,9 +27,28 @@ export default function App() {
     });
     const dayOfWeek = today.getDay();
 
+    const { settings } = useSettings();
+
     // Persistent State
     const [points, setPoints] = usePersistentState<number>('thu_points', 0);
-    const [workoutWeights, setWorkoutWeights] = usePersistentState<WorkoutWeights>('thu_weights', { bench: 40, squat: 50, pull: 30 });
+    const [workoutWeights, setWorkoutWeights] = usePersistentState<WorkoutWeights>('thu_weights', [
+        { id: 'bench', name: '卧推', weight: 40, sets: 3 },
+        { id: 'squat', name: '深蹲', weight: 50, sets: 3 },
+        { id: 'pull', name: '下拉', weight: 30, sets: 3 }
+    ]);
+
+    // Data Migration for Training Items
+    useEffect(() => {
+        if (workoutWeights && !Array.isArray(workoutWeights)) {
+            console.log('Migrating legacy training data...');
+            const legacy = workoutWeights as any;
+            setWorkoutWeights([
+                { id: 'bench', name: '卧推', weight: legacy.bench || 40, sets: 3 },
+                { id: 'squat', name: '深蹲', weight: legacy.squat || 50, sets: 3 },
+                { id: 'pull', name: '下拉', weight: legacy.pull || 30, sets: 3 }
+            ]);
+        }
+    }, []);
     const [logs, setLogs] = usePersistentState<Log[]>('thu_logs', []);
     const [cooldowns, setCooldowns] = usePersistentState<Record<string, string>>('thu_cds', {});
 
@@ -52,18 +73,31 @@ export default function App() {
         return () => clearInterval(timer);
     }, []);
 
-    // Initialize special meals for Friday/Saturday on mount
+    // Initialize meals on mount if empty
     useEffect(() => {
-        if (!dailyState.lunch && !dailyState.lunchFailed) {
+        setDailyState(prev => {
             const isFri = dayOfWeek === 5;
             const isSat = dayOfWeek === 6;
 
-            if (isFri || isSat) {
-                const specialMeal = isFri ? SPECIAL_MEALS.liver : SPECIAL_MEALS.fish;
-                setDailyState(prev => ({ ...prev, lunch: specialMeal }));
+            let newLunch = prev.lunch;
+            let newDinner = prev.dinner;
+
+            if (!prev.lunch && !prev.lunchFailed) {
+                if (isFri) newLunch = SPECIAL_MEALS.liver;
+                else if (isSat) newLunch = SPECIAL_MEALS.fish;
+                else newLunch = getWeightedRandomMeal(settings);
             }
-        }
-    }, []); // Only run once on mount
+
+            if (!prev.dinner && !prev.dinnerFailed && !isFri && !isSat) {
+                newDinner = getWeightedRandomMeal(settings, newLunch?.id);
+            }
+
+            if (newLunch !== prev.lunch || newDinner !== prev.dinner) {
+                return { ...prev, lunch: newLunch, dinner: newDinner };
+            }
+            return prev;
+        });
+    }, [dayOfWeek, settings]); // Re-run if settings or day changes
 
     // Auto-Settlement Logic Hook
     useAutoSettlement({
@@ -73,7 +107,8 @@ export default function App() {
         setDailyState,
         setPoints,
         setLogs,
-        today
+        today,
+        settings
     });
 
     const { theme, toggleTheme } = useTheme();
@@ -125,7 +160,11 @@ export default function App() {
                     <StatsTab logs={logs} points={points} />
                 )}
                 {activeTab === 'SETTINGS' && (
-                    <SettingsTab />
+                    <SettingsTab
+                        setWorkoutWeights={setWorkoutWeights}
+                        setPoints={setPoints}
+                        setLogs={setLogs}
+                    />
                 )}
             </div>
 

@@ -1,13 +1,24 @@
 import React, { useState } from 'react';
-import { Settings, Download, Upload, RefreshCw, Eye, FileJson, ChevronDown, ChevronRight, Lock, Star, Zap, Coffee } from 'lucide-react';
+import { Settings, Download, Upload, RefreshCw, Eye, FileJson, ChevronDown, ChevronRight, Lock, Star, Zap, Coffee, Plus, X } from 'lucide-react';
 import { useSettings } from '../hooks/useSettings';
 import { MEAL_POOL, REWARD_MEALS, SPECIAL_MEALS } from '../data/meals';
-import { Meal } from '../types';
+import { Meal, CustomMeal } from '../types';
 import toast from 'react-hot-toast';
 
-export const SettingsTab: React.FC = () => {
+interface SettingsTabProps {
+    setWorkoutWeights: React.Dispatch<React.SetStateAction<any>>;
+    setPoints: React.Dispatch<React.SetStateAction<number>>;
+    setLogs: React.Dispatch<React.SetStateAction<any[]>>;
+}
+
+export const SettingsTab: React.FC<SettingsTabProps> = ({
+    setWorkoutWeights,
+    setPoints,
+    setLogs
+}) => {
     const {
         settings,
+        addCustomMeal,
         deleteCustomMeal,
         deleteCustomReward,
         toggleUseCustomData,
@@ -15,6 +26,21 @@ export const SettingsTab: React.FC = () => {
         exportSettings,
         importSettings
     } = useSettings();
+
+    const [showAddMeal, setShowAddMeal] = useState(false);
+    const [newMeal, setNewMeal] = useState<Partial<CustomMeal>>({
+        type: 'SR',
+        title: '',
+        main: '',
+        side: '',
+        location: '',
+        cost: 0,
+        protein: 0,
+        weight: 1.0,
+        tags: [],
+        tips: '',
+        isCustom: true
+    });
 
     const [showMealBrowser, setShowMealBrowser] = useState(false);
     const [expandedSection, setExpandedSection] = useState<string | null>('SSR');
@@ -34,10 +60,46 @@ export const SettingsTab: React.FC = () => {
     };
 
     const handleReset = () => {
-        if (window.confirm('确定要重置所有自定义设置吗？此操作不可撤销！')) {
+        if (window.confirm('确定要重置所有数据（包括自定义餐食、训练项目、积分和日志）吗？此操作不可撤销！')) {
             resetSettings();
-            toast.success('✅ 设置已重置');
+            setWorkoutWeights([
+                { id: 'bench', name: '卧推', weight: 40, sets: 3 },
+                { id: 'squat', name: '深蹲', weight: 50, sets: 3 },
+                { id: 'pull', name: '下拉', weight: 30, sets: 3 }
+            ]);
+            setPoints(0);
+            setLogs([]);
+            toast.success('✅ 所有数据已重置');
         }
+    };
+
+    const handleAddMeal = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newMeal.title) {
+            toast.error('请输入餐食名称');
+            return;
+        }
+        addCustomMeal({
+            ...newMeal,
+            id: `custom_${Date.now()}`,
+            isCustom: true,
+            tags: newMeal.tags || [],
+        } as CustomMeal);
+        setShowAddMeal(false);
+        setNewMeal({
+            type: 'SR',
+            title: '',
+            main: '',
+            side: '',
+            location: '',
+            cost: 0,
+            protein: 0,
+            weight: 1.0,
+            tags: [],
+            tips: '',
+            isCustom: true
+        });
+        toast.success('✅ 餐食添加成功！');
     };
 
     const downloadTemplate = () => {
@@ -196,6 +258,131 @@ export const SettingsTab: React.FC = () => {
                         />
                     </button>
                 </div>
+            </div>
+
+            {/* Meal Management */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-bold text-gray-800 dark:text-gray-100 flex items-center">
+                        <Plus size={18} className="mr-2 text-indigo-600 dark:text-indigo-400" />
+                        餐食管理
+                    </h3>
+                    <button
+                        onClick={() => setShowAddMeal(!showAddMeal)}
+                        className="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition-colors"
+                    >
+                        {showAddMeal ? '取消' : '添加新餐食'}
+                    </button>
+                </div>
+
+                {showAddMeal && (
+                    <form onSubmit={handleAddMeal} className="space-y-4 mb-6 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-indigo-100 dark:border-indigo-900/30 animate-in fade-in zoom-in-95">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="col-span-2">
+                                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">餐食名称</label>
+                                <input
+                                    type="text" required
+                                    value={newMeal.title}
+                                    onChange={e => setNewMeal({ ...newMeal, title: e.target.value })}
+                                    className="w-full p-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                                    placeholder="如：黄焖鸡米饭"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">类型</label>
+                                <select
+                                    value={newMeal.type}
+                                    onChange={e => setNewMeal({ ...newMeal, type: e.target.value as any })}
+                                    className="w-full p-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                                >
+                                    <option value="SSR">SSR (传说)</option>
+                                    <option value="SR">SR (史诗)</option>
+                                    <option value="R_FLAVOR">R (风味)</option>
+                                    <option value="R_CARB">R (碳水)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">权重 (0.1-2.0)</label>
+                                <input
+                                    type="number" step="0.1" min="0.1" max="2.0"
+                                    value={newMeal.weight}
+                                    onChange={e => setNewMeal({ ...newMeal, weight: parseFloat(e.target.value) })}
+                                    className="w-full p-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">主食</label>
+                                <input
+                                    type="text"
+                                    value={newMeal.main}
+                                    onChange={e => setNewMeal({ ...newMeal, main: e.target.value })}
+                                    className="w-full p-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                                    placeholder="主菜内容"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">配菜</label>
+                                <input
+                                    type="text"
+                                    value={newMeal.side}
+                                    onChange={e => setNewMeal({ ...newMeal, side: e.target.value })}
+                                    className="w-full p-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                                    placeholder="配菜/米饭"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">价格 (¥)</label>
+                                <input
+                                    type="number"
+                                    value={newMeal.cost}
+                                    onChange={e => setNewMeal({ ...newMeal, cost: parseFloat(e.target.value) })}
+                                    className="w-full p-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">蛋白质 (g)</label>
+                                <input
+                                    type="number"
+                                    value={newMeal.protein}
+                                    onChange={e => setNewMeal({ ...newMeal, protein: parseFloat(e.target.value) })}
+                                    className="w-full p-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                                />
+                            </div>
+                        </div>
+                        <button
+                            type="submit"
+                            className="w-full py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-all active:scale-95"
+                        >
+                            保存餐食
+                        </button>
+                    </form>
+                )}
+
+                <div className="grid grid-cols-2 gap-2">
+                    <button
+                        onClick={() => toggleSection(expandedSection === 'CUSTOM' ? '' : 'CUSTOM')}
+                        className="flex items-center justify-center py-2.5 px-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors text-sm font-medium border border-indigo-200 dark:border-indigo-800"
+                    >
+                        <Eye size={16} className="mr-1.5" />
+                        查看已添加 ({settings.customMeals.length})
+                    </button>
+                    <button
+                        onClick={handleReset}
+                        className="flex items-center justify-center py-2.5 px-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors text-sm font-medium border border-red-200 dark:border-red-800"
+                    >
+                        <RefreshCw size={16} className="mr-1.5" />
+                        重置全部
+                    </button>
+                </div>
+                {expandedSection === 'CUSTOM' && (
+                    <div className="mt-4 space-y-2 animate-in slide-in-from-top-2">
+                        {settings.customMeals.length === 0 ? (
+                            <div className="text-center py-4 text-xs text-gray-400">暂无自定义餐食</div>
+                        ) : (
+                            settings.customMeals.map(renderMealCard)
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* JSON Management */}

@@ -3,6 +3,8 @@ import { Dices, Wallet, Lock } from 'lucide-react';
 import { DailyState, Meal, Patch } from '../types';
 import { MealCard } from '../components/MealCard';
 import { REWARD_MEALS, MEAL_POOL, DORM_MEAL } from '../data/meals';
+import { useSettings } from '../hooks/useSettings';
+import { getWeightedRandomMeal } from '../utils/mealUtils';
 import toast from 'react-hot-toast';
 
 interface EatTabProps {
@@ -18,29 +20,21 @@ interface EatTabProps {
 export const EatTab: React.FC<EatTabProps> = ({
     dailyState, setDailyState, points, setPoints, cooldowns, setCooldowns, dayOfWeek
 }) => {
+    const { settings } = useSettings();
 
-    const getWeightedRandomMeal = (excludeId?: string) => {
-        let pool = MEAL_POOL.filter(m => m.id !== excludeId);
-        const totalWeight = pool.reduce((acc, m) => acc + (m.weight || 0), 0);
-        let random = Math.random() * totalWeight;
-        for (let meal of pool) {
-            if (random < (meal.weight || 0)) return meal;
-            random -= (meal.weight || 0);
+    const handleRoll = (slot: 'lunch' | 'dinner') => {
+        const exclude = slot === 'lunch' ? dailyState.dinner?.id : dailyState.lunch?.id;
+        const meal = getWeightedRandomMeal(settings, exclude);
+
+        if (meal) {
+            updateDaily(slot, meal);
+            updateDaily(`${slot}Patch` as keyof DailyState, null);
+            updateDaily(`${slot}Failed` as keyof DailyState, false);
         }
-        return pool[0];
     };
 
     const updateDaily = (key: keyof DailyState, value: any) => {
         setDailyState(prev => ({ ...prev, [key]: value }));
-    };
-
-    const handleRoll = (slot: 'lunch' | 'dinner') => {
-        const exclude = slot === 'lunch' ? dailyState.dinner?.id : dailyState.lunch?.id;
-        const meal = getWeightedRandomMeal(exclude);
-
-        updateDaily(slot, meal);
-        updateDaily(`${slot}Patch` as keyof DailyState, null);
-        updateDaily(`${slot}Failed` as keyof DailyState, false);
     };
 
     const toggleDorm = (slot: 'lunch' | 'dinner') => {
