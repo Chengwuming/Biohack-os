@@ -27,7 +27,8 @@ export function useSettings() {
     const addCustomMeal = (meal: CustomMeal) => {
         setSettings(prev => ({
             ...prev,
-            customMeals: [...prev.customMeals, meal]
+            customMeals: [...prev.customMeals, meal],
+            useCustomData: true
         }));
     };
 

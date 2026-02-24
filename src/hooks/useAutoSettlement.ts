@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
-import { DailyState, Log } from '../types';
+import { DailyState, Log, Settings } from '../types';
 import { SPECIAL_MEALS } from '../data/meals';
+import { getWeightedRandomMeal } from '../utils/mealUtils';
 
 interface AutoSettlementProps {
     lastActiveDate: string;
@@ -10,6 +11,7 @@ interface AutoSettlementProps {
     setPoints: (callback: (prev: number) => number) => void;
     setLogs: (callback: (prev: Log[]) => Log[]) => void;
     today: Date;
+    settings: Settings;
 }
 
 export function useAutoSettlement({
@@ -19,7 +21,8 @@ export function useAutoSettlement({
     setDailyState,
     setPoints,
     setLogs,
-    today
+    today,
+    settings
 }: AutoSettlementProps) {
 
     useEffect(() => {
@@ -42,9 +45,12 @@ export function useAutoSettlement({
             const isFri = dayOfWeek === 5;
             const isSat = dayOfWeek === 6;
 
+            const lunch = isFri ? SPECIAL_MEALS.liver : isSat ? SPECIAL_MEALS.fish : getWeightedRandomMeal(settings);
+            const dinner = isFri || isSat ? null : getWeightedRandomMeal(settings, lunch?.id);
+
             const newState: DailyState = {
-                lunch: isFri ? SPECIAL_MEALS.liver : isSat ? SPECIAL_MEALS.fish : null,
-                dinner: null,
+                lunch,
+                dinner,
                 lunchPatch: null, dinnerPatch: null,
                 lunchFailed: false, dinnerFailed: false
             };

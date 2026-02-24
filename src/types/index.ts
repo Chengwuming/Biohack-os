@@ -37,11 +37,15 @@ export interface Log {
     details: string;
 }
 
-export interface WorkoutWeights {
-    bench: number;
-    squat: number;
-    pull: number;
+export interface TrainingItem {
+    id: string;
+    name: string;
+    weight: number;
+    sets: number;
+    isCustom?: boolean;
 }
+
+export type WorkoutWeights = TrainingItem[];
 
 export interface DailyState {
     lunch: Meal | null;
